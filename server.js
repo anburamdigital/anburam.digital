@@ -1,34 +1,56 @@
-// server.js — Anburam.Digital
-// Currently serves static index.html
-// Future: add API routes, database, blog, etc.
+// server.js — Anburam.Digital Phase 2
+// Features: MongoDB leads, Admin panel, Blog CMS
 
 const express = require('express');
+const mongoose = require('mongoose');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const path = require('path');
+require('dotenv').config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files
+// ── MIDDLEWARE ───────────────────────────────────
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// Health check — used by cron-job.org to keep Render free tier alive
-app.get('/ping', (req, res) => {
-  res.status(200).send('OK');
-});
+// ── SESSION ──────────────────────────────────────
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'anburam-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),
+  cookie: { maxAge: 1000 * 60 * 60 * 24 } // 24 hours
+}));
 
-// Serve index.html for all routes
+// ── DATABASE ─────────────────────────────────────
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB error:', err));
+
+// ── ROUTES ───────────────────────────────────────
+app.use('/api/contact', require('./routes/contact'));
+app.use('/api/blog',    require('./routes/blog'));
+app.use('/admin',       require('./routes/admin'));
+
+// ── HEALTH CHECK (keep-alive for Render free tier) ──
+app.get('/ping', (req, res) => res.status(200).send('OK'));
+
+// ── FRONTEND ─────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ── START ────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`Anburam.Digital running on port ${PORT}`);
+  console.log(`🚀 Anburam.Digital running on port ${PORT}`);
 });
 
-// ─────────────────────────────────────────────
-// FUTURE ROUTES TO ADD:
-// ─────────────────────────────────────────────
-// app.get('/api/leads', ...)        → fetch all leads
-// app.post('/api/contact', ...)     → save contact form to DB
-// app.get('/blog', ...)             → blog CMS
-// app.get('/admin', ...)            → admin dashboard
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────
+// PHASE 3 ROUTES (future):
+// ─────────────────────────────────────────────────
+// app.use('/api/payments', require('./routes/payments'));
+// app.use('/api/ai',       require('./routes/ai'));       ← Python FastAPI
+// ─────────────────────────────────────────────────
