@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Anburam.Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --purple: #7c3aed;
+    --purple-light: #a855f7;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Space Mono', monospace; min-height: 100vh; }
+
+  /* ── LAYOUT ── */
+  .sidebar {
+    position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 24px 0; z-index: 100;
+  }
+  .logo { padding: 0 20px 24px; border-bottom: 1px solid var(--border); }
+  .logo-text { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800; letter-spacing: 0.1em; }
+  .logo-text span { color: var(--purple-light); }
+  .logo-sub { font-size: 0.6rem; color: var(--muted); margin-top: 2px; letter-spacing: 0.15em; }
+  nav { padding: 16px 0; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; font-size: 0.75rem; letter-spacing: 0.08em;
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--purple-light); border-left-color: var(--purple-light); background: rgba(124,58,237,0.08); }
+  .nav-item .icon { font-size: 1rem; }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .logout-btn {
+    width: 100%; background: transparent; border: 1px solid var(--border);
+    color: var(--muted); padding: 8px; border-radius: 6px; font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.08em; cursor: pointer; transition: all 0.2s;
+  }
+  .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .main { margin-left: 220px; padding: 32px; min-height: 100vh; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── HEADER ── */
+  .page-header { margin-bottom: 28px; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; }
+  .page-sub { color: var(--muted); font-size: 0.7rem; margin-top: 4px; }
+
+  /* ── STATS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+  }
+  .stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+  .stat-value.purple { color: var(--purple-light); }
+  .stat-value.green { color: var(--green); }
+  .stat-value.yellow { color: var(--yellow); }
+  .stat-value.blue { color: var(--blue); }
+
+  /* ── TABLE ── */
+  .table-container {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .table-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .table-title { font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; padding: 12px 16px;
+    font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--border); background: var(--surface2);
+  }
+  td { padding: 12px 16px; font-size: 0.75rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em;
+  }
+  .badge-new { background: rgba(59,130,246,0.15); color: var(--blue); }
+  .badge-contacted { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .badge-converted { background: rgba(16,185,129,0.15); color: var(--green); }
+  .badge-closed { background: rgba(100,116,139,0.15); color: var(--muted); }
+  .badge-published { background: rgba(16,185,129,0.15); color: var(--green); }
+  .badge-draft { background: rgba(100,116,139,0.15); color: var(--muted); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer;
+    font-family: 'Space Mono', monospace; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.05em; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--purple); color: #fff; }
+  .btn-primary:hover { background: var(--purple-light); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn-sm { padding: 4px 10px; font-size: 0.65rem; }
+
+  /* ── STATUS SELECT ── */
+  select.status-select {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 4px 8px; border-radius: 6px; font-size: 0.7rem;
+    font-family: 'Space Mono', monospace; cursor: pointer;
+  }
+
+  /* ── BLOG FORM ── */
+  .blog-form {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; margin-bottom: 24px;
+  }
+  .form-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 20px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; }
+  input[type="text"], textarea, select.form-select {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; color: var(--text); font-family: 'Space Mono', monospace;
+    font-size: 0.8rem; outline: none; transition: border-color 0.2s;
+    width: 100%;
+  }
+  input[type="text"]:focus, textarea:focus { border-color: var(--purple); }
+  textarea { min-height: 120px; resize: vertical; }
+  .form-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .toggle-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.75rem; }
+  .toggle-input { width: 36px; height: 20px; appearance: none; background: var(--border); border-radius: 10px; cursor: pointer; position: relative; transition: background 0.2s; }
+  .toggle-input:checked { background: var(--purple); }
+  .toggle-input::after { content: ''; position: absolute; width: 14px; height: 14px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
+  .toggle-input:checked::after { left: 19px; }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 48px; color: var(--muted); font-size: 0.75rem; }
+
+  /* ── LOADING ── */
+  .loading { text-align: center; padding: 32px; color: var(--muted); font-size: 0.75rem; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-text">ANBURAM<span>.</span>DIGITAL</div>
+    <div class="logo-sub">ADMIN PANEL</div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="icon">📊</span> DASHBOARD
+    </div>
+    <div class="nav-item" onclick="showPage('leads')">
+      <span class="icon">👥</span> LEADS
+    </div>
+    <div class="nav-item" onclick="showPage('blog')">
+      <span class="icon">✍️</span> BLOG
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="logout()">LOGOUT →</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Welcome back, Anburam. Here's your overview.</div>
+    </div>
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-label">TOTAL LEADS</div><div class="stat-value purple" id="stat-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">NEW LEADS</div><div class="stat-value blue" id="stat-new">—</div></div>
+      <div class="stat-card"><div class="stat-label">CONVERTED</div><div class="stat-value green" id="stat-converted">—</div></div>
+      <div class="stat-card"><div class="stat-label">BLOG POSTS</div><div class="stat-value yellow" id="stat-posts">—</div></div>
+    </div>
+    <div class="table-container">
+      <div class="table-header"><div class="table-title">Recent Leads</div></div>
+      <table>
+        <thead><tr><th>NAME</th><th>EMAIL</th><th>SERVICE</th><th>STATUS</th><th>DATE</th></tr></thead>
+        <tbody id="recent-leads"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- LEADS PAGE -->
+  <div class="page" id="page-leads">
+    <div class="page-header">
+      <div class="page-title">Leads</div>
+      <div class="page-sub">All contact form submissions</div>
+    </div>
+    <div class="table-container">
+      <div class="table-header">
+        <div class="table-title">All Leads</div>
+      </div>
+      <table>
+        <thead><tr><th>NAME</th><th>EMAIL</th><th>PHONE</th><th>SERVICE</th><th>MESSAGE</th><th>STATUS</th><th>DATE</th><th>ACTION</th></tr></thead>
+        <tbody id="leads-table"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BLOG PAGE -->
+  <div class="page" id="page-blog">
+    <div class="page-header">
+      <div class="page-title">Blog</div>
+      <div class="page-sub">Create and manage blog posts</div>
+    </div>
+
+    <div class="blog-form">
+      <div class="form-title" id="form-title">New Post</div>
+      <input type="hidden" id="edit-id">
+      <div class="form-row">
+        <div class="form-group"><label>TITLE</label><input type="text" id="post-title" placeholder="e.g. 5 SEO Tips for Tamil Nadu Businesses"></div>
+        <div class="form-group"><label>CATEGORY</label><input type="text" id="post-category" placeholder="SEO, Social Media, Paid Ads..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>SLUG (auto-generated if empty)</label><input type="text" id="post-slug" placeholder="seo-tips-tamil-nadu"></div>
+        <div class="form-group"><label>COVER IMAGE URL</label><input type="text" id="post-cover" placeholder="https://..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group full"><label>EXCERPT (short summary)</label><input type="text" id="post-excerpt" placeholder="Brief description shown in blog listing..."></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group full"><label>CONTENT (HTML supported)</label><textarea id="post-content" placeholder="Write your blog post content here. HTML tags are supported."></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="savePost()">SAVE POST</button>
+        <label class="toggle-label">
+          <input type="checkbox" class="toggle-input" id="post-published">
+          Publish immediately
+        </label>
+        <button class="btn btn-sm" onclick="clearForm()" style="background:var(--border);color:var(--muted)">CLEAR</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <div class="table-header"><div class="table-title">All Posts</div></div>
+      <table>
+        <thead><tr><th>TITLE</th><th>CATEGORY</th><th>STATUS</th><th>DATE</th><th>ACTIONS</th></tr></thead>
+        <tbody id="blog-table"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let allLeads = [];
+let allPosts = [];
+
+// ── NAV ──────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item')[['dashboard','leads','blog'].indexOf(name)].classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'leads') loadLeads();
+  if (name === 'blog') loadBlog();
+}
+
+async function logout() {
+  await fetch('/admin/logout', { method: 'POST' });
+  window.location.href = '/admin/login';
+}
+
+// ── HELPERS ─────────────────────────────────────
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function badge(status) {
+  const map = { new:'badge-new', contacted:'badge-contacted', converted:'badge-converted', closed:'badge-closed', true:'badge-published', false:'badge-draft' };
+  const label = { new:'NEW', contacted:'CONTACTED', converted:'CONVERTED', closed:'CLOSED', true:'PUBLISHED', false:'DRAFT' };
+  return `<span class="badge ${map[status]}">${label[status]}</span>`;
+}
+
+// ── DASHBOARD ────────────────────────────────────
+async function loadDashboard() {
+  const [leadsRes, postsRes] = await Promise.all([
+    fetch('/admin/api/leads'), fetch('/admin/api/blog')
+  ]);
+  allLeads = (await leadsRes.json()).leads || [];
+  allPosts = (await postsRes.json()).posts || [];
+
+  document.getElementById('stat-total').textContent = allLeads.length;
+  document.getElementById('stat-new').textContent = allLeads.filter(l => l.status === 'new').length;
+  document.getElementById('stat-converted').textContent = allLeads.filter(l => l.status === 'converted').length;
+  document.getElementById('stat-posts').textContent = allPosts.filter(p => p.published).length;
+
+  const recent = allLeads.slice(0, 5);
+  document.getElementById('recent-leads').innerHTML = recent.length
+    ? recent.map(l => `<tr>
+        <td>${l.name}</td>
+        <td>${l.email}</td>
+        <td>${l.service || '—'}</td>
+        <td>${badge(l.status)}</td>
+        <td>${fmtDate(l.createdAt)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty">No leads yet.</td></tr>';
+}
+
+// ── LEADS ────────────────────────────────────────
+async function loadLeads() {
+  const res = await fetch('/admin/api/leads');
+  allLeads = (await res.json()).leads || [];
+  renderLeads();
+}
+
+function renderLeads() {
+  document.getElementById('leads-table').innerHTML = allLeads.length
+    ? allLeads.map(l => `<tr>
+        <td>${l.name}</td>
+        <td>${l.email}</td>
+        <td>${l.phone || '—'}</td>
+        <td>${l.service || '—'}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.message || '—'}</td>
+        <td>
+          <select class="status-select" onchange="updateLeadStatus('${l._id}', this.value)">
+            ${['new','contacted','converted','closed'].map(s => `<option value="${s}" ${l.status===s?'selected':''}>${s.toUpperCase()}</option>`).join('')}
+          </select>
+        </td>
+        <td>${fmtDate(l.createdAt)}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteLead('${l._id}')">DEL</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="8" class="empty">No leads yet. They\'ll appear here when someone submits the contact form.</td></tr>';
+}
+
+async function updateLeadStatus(id, status) {
+  await fetch(`/admin/api/leads/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+}
+
+async function deleteLead(id) {
+  if (!confirm('Delete this lead?')) return;
+  await fetch(`/admin/api/leads/${id}`, { method: 'DELETE' });
+  loadLeads();
+}
+
+// ── BLOG ─────────────────────────────────────────
+async function loadBlog() {
+  const res = await fetch('/admin/api/blog');
+  allPosts = (await res.json()).posts || [];
+  renderBlog();
+}
+
+function renderBlog() {
+  document.getElementById('blog-table').innerHTML = allPosts.length
+    ? allPosts.map(p => `<tr>
+        <td>${p.title}</td>
+        <td>${p.category || '—'}</td>
+        <td>${badge(p.published)}</td>
+        <td>${fmtDate(p.createdAt)}</td>
+        <td style="display:flex;gap:6px">
+          <button class="btn btn-sm btn-primary" onclick="editPost('${p._id}')">EDIT</button>
+          <button class="btn btn-sm btn-danger" onclick="deletePost('${p._id}')">DEL</button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="empty">No blog posts yet. Create your first post above!</td></tr>';
+}
+
+async function savePost() {
+  const id = document.getElementById('edit-id').value;
+  const data = {
+    title: document.getElementById('post-title').value.trim(),
+    slug: document.getElementById('post-slug').value.trim(),
+    category: document.getElementById('post-category').value.trim(),
+    excerpt: document.getElementById('post-excerpt').value.trim(),
+    content: document.getElementById('post-content').value.trim(),
+    coverImage: document.getElementById('post-cover').value.trim(),
+    published: document.getElementById('post-published').checked,
+  };
+  if (!data.title || !data.content) return alert('Title and content are required.');
+  const url = id ? `/admin/api/blog/${id}` : '/admin/api/blog';
+  const method = id ? 'PATCH' : 'POST';
+  const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const result = await res.json();
+  if (result.success) { clearForm(); loadBlog(); }
+  else alert('Error: ' + result.message);
+}
+
+function editPost(id) {
+  const p = allPosts.find(x => x._id === id);
+  if (!p) return;
+  document.getElementById('edit-id').value = p._id;
+  document.getElementById('post-title').value = p.title;
+  document.getElementById('post-slug').value = p.slug;
+  document.getElementById('post-category').value = p.category || '';
+  document.getElementById('post-excerpt').value = p.excerpt || '';
+  document.getElementById('post-content').value = p.content;
+  document.getElementById('post-cover').value = p.coverImage || '';
+  document.getElementById('post-published').checked = p.published;
+  document.getElementById('form-title').textContent = 'Edit Post';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deletePost(id) {
+  if (!confirm('Delete this post?')) return;
+  await fetch(`/admin/api/blog/${id}`, { method: 'DELETE' });
+  loadBlog();
+}
+
+function clearForm() {
+  ['edit-id','post-title','post-slug','post-category','post-excerpt','post-content','post-cover'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('post-published').checked = false;
+  document.getElementById('form-title').textContent = 'New Post';
+}
+
+// ── INIT ─────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>
