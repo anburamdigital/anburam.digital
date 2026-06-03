@@ -4,6 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Anburam.Digital — Grow Beyond Usual</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c3aed'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='18' fill='white'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="shortcut icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c3aed'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Arial Black,Arial,sans-serif' font-weight='900' font-size='18' fill='white'%3EA%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -782,11 +784,7 @@ async function fsub(){
   if(!fv(4))return;
   var b=document.getElementById('sbtn');b.innerHTML='<span class="spin"></span>Sending...';b.disabled=true;
   var d={firstName:document.getElementById('i_fn').value.trim(),lastName:document.getElementById('i_ln').value.trim(),email:document.getElementById('i_em').value.trim(),businessType:document.getElementById('i_biz').value,city:document.getElementById('i_city').value.trim(),phone:document.getElementById('i_code').value+document.getElementById('i_ph').value.trim(),goal:document.getElementById('i_goal').value,budget:document.getElementById('i_budget').value,preferredContact:document.getElementById('i_pref').value,notes:document.getElementById('i_note').value};
-  try{
-    const res = await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:d.firstName+' '+d.lastName,email:d.email,phone:d.phone,service:d.goal,message:'Business: '+d.businessType+' | City: '+d.city+' | Budget: '+d.budget+' | Contact pref: '+d.preferredContact+' | Notes: '+d.notes,source:'free-audit'})});
-    const result = await res.json();
-    if(!result.success) throw new Error(result.message);
-  }catch(e){console.error('Audit form error:',e);}
+  try{await fetch('https://formspree.io/f/xdavndwq',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(d)});}catch(e){}
   document.getElementById('m4').classList.remove('active');
   document.getElementById('msuc').classList.add('active');
   document.querySelector('.ptrack').style.display='none';
@@ -803,11 +801,7 @@ async function submitContact(e){
   if(!biz.value){document.getElementById('cf_biz').classList.add('err');ok=false;}
   if(!ok)return;
   var btn=document.getElementById('csubBtn');btn.innerHTML='<span class="spin"></span>Sending...';btn.disabled=true;
-  try{
-    const res = await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.value.trim(),email:em.value.trim(),service:biz.value,message:document.getElementById('c_msg').value})});
-    const result = await res.json();
-    if(!result.success) throw new Error(result.message);
-  }catch(er){console.error('Contact form error:',er);}
+  try{await fetch('https://formspree.io/f/xdavndwq',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({name:n.value.trim(),email:em.value.trim(),businessType:biz.value,message:document.getElementById('c_msg').value})});}catch(er){}
   btn.style.display='none';
   document.getElementById('formSuccess').style.display='block';
 }
