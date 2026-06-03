@@ -782,7 +782,11 @@ async function fsub(){
   if(!fv(4))return;
   var b=document.getElementById('sbtn');b.innerHTML='<span class="spin"></span>Sending...';b.disabled=true;
   var d={firstName:document.getElementById('i_fn').value.trim(),lastName:document.getElementById('i_ln').value.trim(),email:document.getElementById('i_em').value.trim(),businessType:document.getElementById('i_biz').value,city:document.getElementById('i_city').value.trim(),phone:document.getElementById('i_code').value+document.getElementById('i_ph').value.trim(),goal:document.getElementById('i_goal').value,budget:document.getElementById('i_budget').value,preferredContact:document.getElementById('i_pref').value,notes:document.getElementById('i_note').value};
-  try{await fetch('https://formspree.io/f/xdavndwq',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(d)});}catch(e){}
+  try{
+    const res = await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:d.firstName+' '+d.lastName,email:d.email,phone:d.phone,service:d.goal,message:'Business: '+d.businessType+' | City: '+d.city+' | Budget: '+d.budget+' | Contact pref: '+d.preferredContact+' | Notes: '+d.notes,source:'free-audit'})});
+    const result = await res.json();
+    if(!result.success) throw new Error(result.message);
+  }catch(e){console.error('Audit form error:',e);}
   document.getElementById('m4').classList.remove('active');
   document.getElementById('msuc').classList.add('active');
   document.querySelector('.ptrack').style.display='none';
@@ -799,7 +803,11 @@ async function submitContact(e){
   if(!biz.value){document.getElementById('cf_biz').classList.add('err');ok=false;}
   if(!ok)return;
   var btn=document.getElementById('csubBtn');btn.innerHTML='<span class="spin"></span>Sending...';btn.disabled=true;
-  try{await fetch('https://formspree.io/f/xdavndwq',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({name:n.value.trim(),email:em.value.trim(),businessType:biz.value,message:document.getElementById('c_msg').value})});}catch(er){}
+  try{
+    const res = await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.value.trim(),email:em.value.trim(),service:biz.value,message:document.getElementById('c_msg').value})});
+    const result = await res.json();
+    if(!result.success) throw new Error(result.message);
+  }catch(er){console.error('Contact form error:',er);}
   btn.style.display='none';
   document.getElementById('formSuccess').style.display='block';
 }
