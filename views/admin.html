@@ -64,10 +64,10 @@
   .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
   .stat-card {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 12px; padding: 20px;
+    border-radius: 12px; padding: 20px; overflow: hidden;
   }
   .stat-label { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 8px; }
-  .stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+  .stat-value { font-family: 'Syne', Arial, sans-serif; font-size: 2rem; font-weight: 800; line-height: 1.2; display: block; }
   .stat-value.purple { color: var(--purple-light); }
   .stat-value.green { color: var(--green); }
   .stat-value.yellow { color: var(--yellow); }
