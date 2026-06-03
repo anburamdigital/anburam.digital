@@ -1,7 +1,8 @@
-// routes/contact.js — Save leads + Brevo email alert
+// routes/contact.js — Save leads + Brevo email + Telegram (n8n) alert
 const express = require('express');
 const router = express.Router();
 const nodemailer = require('nodemailer');
+const https = require('https');
 const Lead = require('../models/Lead');
 
 // Brevo SMTP transporter
@@ -57,12 +58,37 @@ async function sendLeadAlert(lead) {
       </div>
     </div>
   `;
-
   await transporter.sendMail({
     from: '"Anburam.Digital" <ac928a001@smtp-brevo.com>',
     to: 'anburam.digital@gmail.com',
     subject: `🔔 New Lead: ${lead.name} — ${lead.service || 'General Inquiry'}`,
     html,
+  });
+}
+
+// Send Telegram alert via n8n webhook
+async function sendTelegramAlert(lead) {
+  const payload = JSON.stringify({
+    name: lead.name,
+    email: lead.email,
+    phone: lead.phone || 'Not provided',
+    service: lead.service || 'Not specified',
+    message: lead.message || 'No message',
+    source: lead.source || 'website',
+  });
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'n8n-5l8h.onrender.com',
+      path: '/webhook/lead-alert',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+    }, res => { resolve(res.statusCode); });
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
   });
 }
 
@@ -85,6 +111,13 @@ router.post('/', async (req, res) => {
       console.log(`📧 Email alert sent for: ${name}`);
     }).catch(err => {
       console.error('Email alert failed:', err.message);
+    });
+
+    // Send Telegram alert via n8n (non-blocking)
+    sendTelegramAlert(lead).then(status => {
+      console.log(`📱 Telegram alert sent for: ${name} (status: ${status})`);
+    }).catch(err => {
+      console.error('Telegram alert failed:', err.message);
     });
 
     res.status(201).json({ success: true, message: 'Thanks! We will contact you shortly.' });
